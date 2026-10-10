@@ -33,7 +33,7 @@
 
     .counter-bar { width: 60px; background: #111827; border: 2px solid #a855f7; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; font-weight: 800; color: #38bdf8; }
 
-    #status { color: #38bdf8; font-weight: 600; font-size: 0.85rem; text-align: center; background: #1e293b; padding: 10px; border-radius: 6px; width: 100%; max-width: 900px; }
+    #status { color: #38bdf8; font-weight: 600; font-size: 0.85rem; text-align: center; background: #1e293b; padding: 10px; border-radius: 6px; width: 100%; max-width: 900px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -47,13 +47,12 @@
       <div>
         <label class="field-label">Ana Kategori</label>
         <select id="categorySelect">
-          <option value="Dini & Manevi İçerik">🕌 Dini & Manevi Bilgiler</option>
-          <option value="İlginç Bilgiler & Genel Kültür">💡 İlginç Bilgiler & Şaşırtıcı Gerçekler</option>
-          <option value="Dünya & Türk Tarihi">📜 Dünya & Türk Tarihi</option>
-          <option value="Bilim, Teknoloji & Uzay">🚀 Bilim, Teknoloji & Uzay</option>
-          <option value="Motivasyon & Kişisel Gelişim">🔥 Motivasyon & Başarı Hikayeleri</option>
-          <option value="Psikoloji & İnsan Davranışları">🧠 Psikoloji & Zihin Gerçekleri</option>
-          <option value="Özel Konu">✍️ Özel Konu Yazacağım...</option>
+          <option value="Dini ve Manevi Bilgiler">🕌 Dini & Manevi Bilgiler</option>
+          <option value="Ilginç Bilgiler">💡 İlginç Bilgiler & Şaşırtıcı Gerçekler</option>
+          <option value="Dunya ve Turk Tarihi">📜 Dünya & Türk Tarihi</option>
+          <option value="Bilim ve Teknoloji">🚀 Bilim, Teknoloji & Uzay</option>
+          <option value="Motivasyon">🔥 Motivasyon & Başarı Hikayeleri</option>
+          <option value="Psikoloji">🧠 Psikoloji & Zihin Gerçekleri</option>
         </select>
       </div>
       <div>
@@ -127,7 +126,7 @@
     let selectedSubStyle = 'yellow';
 
     function setSubStyle(style, el) {
-      document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.sub-btn').forEach(function(b) { b.classList.remove('active'); });
       el.classList.add('active');
       selectedSubStyle = style;
     }
@@ -150,7 +149,7 @@
     }
 
     function fetchHDImage(sig) {
-      return new Promise((resolve) => {
+      return new Promise(function(resolve) {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.src = "https://picsum.photos/1080/1920?random=" + sig;
@@ -169,21 +168,26 @@
     }
 
     function downloadGoogleSpeechMP3(text, apiKey) {
-      return new Promise((resolve, reject) => {
+      return new Promise(function(resolve, reject) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(function() { controller.abort(); }, 4000); // 4 saniye zaman aşımı
+
         const url = "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + apiKey;
         fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             input: { text: text },
-            voice: { languageCode: 'tr-TR', ssmlGender: 'FEMALE' },
+            voice: { languageCode: 'tr-TR', name: 'tr-TR-Standard-A' },
             audioConfig: { audioEncoding: 'MP3' }
           })
         })
-        .then(res => res.json())
-        .then(data => {
-          if (!data.audioContent) {
-            reject(new Error(data.error ? data.error.message : "Ses verisi alınamadı"));
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          clearTimeout(timeoutId);
+          if (!data || !data.audioContent) {
+            reject(new Error(data && data.error ? data.error.message : "Google TTS Ses Verisi Boş"));
             return;
           }
           const binaryString = atob(data.audioContent);
@@ -202,7 +206,10 @@
           document.body.removeChild(a);
           resolve(true);
         })
-        .catch(err => reject(err));
+        .catch(function(err) {
+          clearTimeout(timeoutId);
+          reject(err);
+        });
       });
     }
 
@@ -220,4 +227,155 @@
 
       try {
         counter.innerText = "1";
-        status.innerHTML = "⏳
+        status.innerHTML = "⏳ <b>[1/4] Metin Hazırlanıyor...</b>";
+
+        const scenes = [
+          { subtitle: finalTopic + " Hakkinda Sasirtici Gercekler" },
+          { subtitle: "Gecmistten gunumuze gelen en gizemli detaylar." },
+          { subtitle: "Bilimin ve tarihin arkasindaki sakli sirlar." },
+          { subtitle: "Bu gercekler bakis acinizi tamamen degistirecek." },
+          { subtitle: "Herkesin merak ettigi o buyuleyici konular." },
+          { subtitle: "Daha fazla icerik icin takip etmeyi unutmayin!" }
+        ];
+
+        counter.innerText = "2";
+        status.innerHTML = "🖼️ <b>[2/4] HD Görseller Yükleniyor...</b>";
+
+        const loadedImages = [];
+        for (let i = 0; i < scenes.length; i++) {
+          const img = await fetchHDImage(Math.floor(Math.random() * 5000) + i);
+          loadedImages.push({ scene: scenes[i], img: img });
+        }
+
+        counter.innerText = "3";
+        status.innerHTML = "🎙️ <b>[3/4] MP3 Ses Dosyası İndiriliyor...</b>";
+
+        const fullText = scenes.map(function(s) { return s.subtitle; }).join('. ');
+
+        try {
+          await downloadGoogleSpeechMP3(fullText, apiKey);
+        } catch (audioErr) {
+          console.warn("Ses hatasi detay:", audioErr);
+          status.innerHTML = "⚠️ Ses Uyarısı: " + audioErr.message + " (Video render başlatıldı...)";
+        }
+
+        const canvas = document.getElementById('renderCanvas');
+        const resParts = document.getElementById('resolution').value.split('x');
+        canvas.width = parseInt(resParts[0]);
+        canvas.height = parseInt(resParts[1]);
+        const ctx = canvas.getContext('2d');
+
+        const fps = parseInt(document.getElementById('fpsSelect').value);
+        const canvasStream = canvas.captureStream(fps);
+
+        let options = { mimeType: 'video/webm' };
+        if (MediaRecorder.isTypeSupported('video/mp4')) {
+          options = { mimeType: 'video/mp4' };
+        }
+
+        const recorder = new MediaRecorder(canvasStream, options);
+        const chunks = [];
+        recorder.ondataavailable = function(e) { chunks.push(e.data); };
+
+        recorder.onstop = function() {
+          const blob = new Blob(chunks, { type: options.mimeType });
+          const videoUrl = URL.createObjectURL(blob);
+
+          const a = document.createElement('a');
+          a.href = videoUrl;
+          a.download = "video_" + Date.now() + ".mp4";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          counter.innerText = "0";
+          status.innerHTML = "🎉 <b>[4/4] Tamamlandı:</b> İndirmeler Başlatıldı!";
+          btn.disabled = false;
+        };
+
+        recorder.start();
+
+        counter.innerText = "4";
+        const startTime = Date.now();
+        const sceneDuration = totalDuration / scenes.length;
+
+        function drawSubtitle(text) {
+          ctx.save();
+          let fontSize = canvas.height * 0.045;
+          ctx.font = "bold " + fontSize + "px 'Segoe UI', sans-serif";
+          ctx.textAlign = 'center';
+          const lines = wrapText(ctx, text, canvas.width * 0.85);
+          const startY = canvas.height * 0.75;
+
+          lines.forEach(function(line, idx) {
+            let yPos = startY + (idx * fontSize * 1.3);
+            if (selectedSubStyle === 'yellow') {
+              ctx.fillStyle = '#facc15';
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = 8;
+              ctx.strokeText(line, canvas.width / 2, yPos);
+              ctx.fillText(line, canvas.width / 2, yPos);
+            } else if (selectedSubStyle === 'neon') {
+              ctx.shadowColor = '#a855f7';
+              ctx.shadowBlur = 20;
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(line, canvas.width / 2, yPos);
+            } else if (selectedSubStyle === 'box') {
+              ctx.fillStyle = '#000000c0';
+              const textWidth = ctx.measureText(line).width;
+              ctx.fillRect((canvas.width - textWidth) / 2 - 10, yPos - fontSize + 5, textWidth + 20, fontSize + 10);
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(line, canvas.width / 2, yPos);
+            } else {
+              ctx.fillStyle = '#ffffff';
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = 6;
+              ctx.strokeText(line, canvas.width / 2, yPos);
+              ctx.fillText(line, canvas.width / 2, yPos);
+            }
+          });
+          ctx.restore();
+        }
+
+        function animate() {
+          const elapsed = (Date.now() - startTime) / 1000;
+
+          if (elapsed >= totalDuration) {
+            if (recorder && recorder.state !== 'inactive') recorder.stop();
+            return;
+          }
+
+          status.innerHTML = "🎬 <b>[4/4] Render Alınıyor:</b> " + elapsed.toFixed(1) + "s / " + totalDuration + "s...";
+
+          const sceneIndex = Math.min(Math.floor(elapsed / sceneDuration), loadedImages.length - 1);
+          const currentData = loadedImages[sceneIndex];
+
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          if (currentData && currentData.img) {
+            ctx.save();
+            const sceneElapsed = elapsed % sceneDuration;
+            const scale = 1.0 + (sceneElapsed * 0.025);
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(scale, scale);
+            ctx.drawImage(currentData.img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            ctx.restore();
+
+            drawSubtitle(currentData.scene.subtitle);
+          }
+
+          requestAnimationFrame(animate);
+        }
+
+        animate();
+
+      } catch (e) {
+        counter.innerText = "0";
+        status.innerHTML = "❌ Hata: " + e.message;
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
