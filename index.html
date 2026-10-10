@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Kurgu Canavarı OTO-PILOT</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #0b0f19; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 15px; min-height: 100vh; }
+    
+    h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 2px; }
+    p.sub { color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px; text-align: center; }
+
+    .panel-card { background: #111827; border: 1px solid #1e293b; border-radius: 10px; padding: 15px; width: 100%; max-width: 900px; margin-bottom: 12px; }
+    .panel-title { font-size: 0.8rem; color: #a855f7; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+
+    label.field-label { display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600; }
+    select, input[type="text"] { width: 100%; background: #1e293b; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px; outline: none; font-size: 0.85rem; }
+
+    .subtitle-styles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 5px; }
+    .sub-btn { background: #1e293b; border: 2px solid #334155; border-radius: 6px; padding: 8px 4px; text-align: center; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; user-select: none; }
+    .sub-btn.active { border-color: #a855f7; background: #a855f720; color: #a855f7; box-shadow: 0 0 8px rgba(168, 85, 247, 0.4); }
+
+    .preview-box { width: 100%; max-width: 900px; background: #111827; border: 1px solid #1e293b; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+    .canvas-container { width: 100%; background: #000; display: flex; justify-content: center; align-items: center; }
+    canvas { width: 100%; max-height: 380px; object-fit: contain; display: block; }
+
+    .action-row { display: flex; gap: 10px; width: 100%; max-width: 900px; margin-bottom: 10px; }
+    .btn-submit { flex: 1; background: linear-gradient(90deg, #3b82f6, #a855f7); border: none; color: white; padding: 16px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+    .btn-submit:hover { opacity: 0.95; transform: translateY(-1px); }
+    
+    .counter-bar { width: 70px; background: #111827; border: 2px solid #a855f7; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: 800; color: #38bdf8; box-shadow: 0 0 10px rgba(168, 85, 247, 0.2); }
+
+    .share-row { display: flex; gap: 10px; width: 100%; max-width: 900px; margin-top: 5px; }
+    .btn-secondary { flex: 1; background: #1e293b; border: 1px solid #334155; color: #38bdf8; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; text-align: center; display: none; }
+    .btn-secondary:hover { background: #334155; }
+
+    #status { color: #38bdf8; font-weight: 600; font-size: 0.9rem; text-align: center; background: #1e293b; padding: 12px; border-radius: 6px; width: 100%; max-width: 900px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>Kurgu Canavarı OTO-PILOT</h1>
+  <p class="sub">Tüm Kategoriler İçin Çok Amaçlı Otomatik YouTube Shorts Üretici</p>
+
+  <div class="panel-card">
+    <div class="panel-title">1. İÇERİK VE KATEGORİ SEÇİMİ</div>
+    <div class="grid-3">
+      <div>
+        <label class="field-label">Ana Kategori</label>
+        <select id="categorySelect">
+          <option value="Dini & Manevi İçerik">🕌 Dini & Manevi Bilgiler</option>
+          <option value="İlginç Bilgiler & Genel Kültür">💡 İlginç Bilgiler & Şaşırtıcı Gerçekler</option>
+          <option value="Dünya & Türk Tarihi">📜 Dünya & Türk Tarihi</option>
+          <option value="Bilim, Teknoloji & Uzay">🚀 Bilim, Teknoloji & Uzay</option>
+          <option value="Motivasyon & Kişisel Gelişim">🔥 Motivasyon & Başarı Hikayeleri</option>
+          <option value="Psikoloji & İnsan Davranışları">🧠 Psikoloji & Zihin Gerçekleri</option>
+          <option value="Özel Konu">✍️ Özel Konu Yazacağım...</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Özel Konu / Detay (Opsiyonel)</label>
+        <input type="text" id="customTopicInput" placeholder="Örn: Karadelikler, Fatih Sultan Mehmet..." />
+      </div>
+      <div>
+        <label class="field-label">Görsel Sanat Tarzı</label>
+        <select id="styleSelect">
+          <option value="photorealistic">📸 Sinematik Gerçekçi</option>
+          <option value="digitalart">🎨 Dijital Sanat</option>
+          <option value="oilpainting">🖼️ Tarihi Yağlı Boya</option>
+          <option value="render3d">🛸 3D Gelecekçi Render</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-card">
+    <div class="panel-title">2. VİDEO VE ALTYAZI AYARLARI</div>
+    <div class="grid-4">
+      <div>
+        <label class="field-label">Çözünürlük</label>
+        <select id="resolution">
+          <option value="1080x1920" selected>Dikey Shorts • 1080×1920</option>
+          <option value="1920x1080">Yatay HD • 1920×1080</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Video Süresi</label>
+        <select id="durationSelect">
+          <option value="30" selected>30 Saniye (Uzun Shorts)</option>
+          <option value="15">15 Saniye (Hızlı)</option>
+          <option value="60">60 Saniye (Tam Boyut)</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Altyazı Boyutu</label>
+        <select id="subSize">
+          <option value="medium" selected>Orta</option>
+          <option value="large">Büyük</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">FPS Modu</label>
+        <select id="fpsSelect">
+          <option value="30">30 FPS (Dengeli)</option>
+          <option value="60">60 FPS (Pürüzsüz)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel-title" style="margin-top: 10px;">ALTYAZI TEMA STİLİ</div>
+    <div class="subtitle-styles">
+      <div class="sub-btn active" onclick="setSubStyle('yellow', this)">Sarı Vurgu</div>
+      <div class="sub-btn" onclick="setSubStyle('neon', this)">Neon Mor</div>
+      <div class="sub-btn" onclick="setSubStyle('box', this)">Koyu Kutu</div>
+      <div class="sub-btn" onclick="setSubStyle('cinema', this)">Sinema</div>
+      <div class="sub-btn" onclick="setSubStyle('classic', this)">Klasik</div>
+      <div class="sub-btn" onclick="setSubStyle('minimal', this)">Minimal</div>
+    </div>
+  </div>
+
+  <div class="preview-box">
+    <div class="canvas-container">
+      <canvas id="renderCanvas" width="1080" height="1920"></canvas>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 HER HANGİ BİR KONUDAN TEK TIKLA VİDEO ÜRET VE İNDİR</button>
+    <div class="counter-bar" id="stepCounter">0</div>
+  </div>
+
+  <div class="share-row">
+    <button class="btn-secondary" id="downloadBtn" onclick="downloadVideo()">📥 Videoyu Tekrar İndir</button>
+  </div>
+  
+  <div id="status">Hazır. Üretimi başlatmak için butona basın.</div>
+
+  <script>
+    let selectedSubStyle = 'yellow';
+    let generatedVideoUrl = null;
+
+    function setSubStyle(style, el) {
+      document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      selectedSubStyle = style;
+    }
+
+    function wrapText(ctx, text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = words[0] || '';
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        if (ctx.measureText(currentLine + ' ' + word).width < maxWidth) {
+          currentLine += ' ' + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    }
+
+    function generateCanvasScene(title, idx) {
+      const c = document.createElement('canvas');
+      c.width = 1080; c.height = 1920;
+      const ctx = c.getContext('2d');
+
+      const colorPairs = [
+        ['#0f172a', '#1e1b4b'],
+        ['#1e1b4b', '#311042'],
+        ['#311042', '#064e3b'],
+        ['#064e3b', '#1e293b'],
+        ['#1e293b', '#0f172a'],
+        ['#2e1065', '#0f172a']
+      ];
+      const pair = colorPairs[idx % colorPairs.length];
+      const grad = ctx.createLinearGradient(0, 0, 1080, 1920);
+      grad.addColorStop(0, pair[0]);
+      grad.addColorStop(1, pair[1]);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      ctx.strokeStyle = '#ffffff15';
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.arc(540, 960, 300 + (idx * 35), 0, Math.PI * 2);
+      ctx.stroke();
+
+      const img = new Image();
+      img.src = c.toDataURL();
+      return img;
+    }
+
+    async function startGeneration() {
+      const status = document.getElementById('status');
+      const counter = document.getElementById('stepCounter');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const category = document.getElementById('categorySelect').value;
+      const customTopic = document.getElementById('customTopicInput').value.trim();
+      const totalDuration = parseInt(document.getElementById('durationSelect').value);
+      const finalTopic = customTopic !== "" ? customTopic : category;
+
+      downloadBtn.style.display = 'none';
+
+      try {
+        counter.innerText = "1";
+        status.innerHTML = `⏳ <b>[1/4] Metin Üretiliyor:</b> Senaryo hazırlanıyor...`;
+        await new Promise(r => setTimeout(r, 400));
+
+        const scenes = [
+          { subtitle: `${finalTopic} Hakkında Şaşırtıcı Gerçekler` },
+          { subtitle: "Geçmişten günümüze gelen en gizemli detaylar." },
+          { subtitle: "Bilimin ve tarihin arkasındaki saklı sırlar." },
+          { subtitle: "Bu gerçekler bakış açınızı tamamen değiştirecek." },
+          { subtitle: "Herkesin merak ettiği o büyüleyici konular." },
+          { subtitle: "Daha fazla içerik için takip etmeyi unutmayın!" }
+        ];
+
+        counter.innerText = "2";
+        status.innerHTML = `🖼️ <b>[2/4] Görseller Hazırlanıyor...</b>`;
+        await new Promise(r => setTimeout(r, 400));
+
+        const loadedImages = scenes.map((s, idx) => ({
+          scene: s,
+          img: generateCanvasScene(s.subtitle, idx)
+        }));
+
+        counter.innerText = "3";
+        status.innerHTML = `🎙️ <b>[3/4] Ses ve Video İşleniyor...</b>`;
+        await new Promise(r => setTimeout(r, 400));
+
+        const canvas = document.getElementById('renderCanvas');
+        const [resW, resH] = document.getElementById('resolution').value.split('x').map(Number);
+        canvas.width = resW;
+        canvas.height = resH;
+        const ctx = canvas.getContext('2d');
+
+        // Seslandırma
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const speechText = scenes.map(s => s.subtitle).join('. ');
+          const ut = new SpeechSynthesisUtterance(speechText);
+          ut.lang = 'tr-TR';
+          ut.rate = 0.95;
+          window.speechSynthesis.speak(ut);
+        }
+
+        const fps = parseInt(document.getElementById('fpsSelect').value);
+        let recorder, chunks = [];
+
+        // Güvenli Kayıt
+        const stream = canvas.captureStream(fps);
+        recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = e => chunks.push(e.data);
+        
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/mp4' });
+          generatedVideoUrl = URL.createObjectURL(blob);
+          
+          downloadVideo();
+          downloadBtn.style.display = 'block';
+          counter.innerText = "0";
+          status.innerHTML = `🎉 <b>[4/4] Tamamlandı:</b> Video Başarıyla İndirildi! %100`;
+        };
+
+        recorder.start();
+
+        counter.innerText = "4";
+        const startTime = Date.now();
+        const sceneDuration = totalDuration / scenes.length;
+
+        function drawSubtitle(text) {
+          ctx.save();
+          let fontSize = canvas.height * 0.045;
+          ctx.font = `bold ${fontSize}px 'Segoe UI', sans-serif`;
+          ctx.textAlign = 'center';
+          const lines = wrapText(ctx, text, canvas.width * 0.85);
+          const startY = canvas.height * 0.75;
+
+          lines.forEach((line, idx) => {
+            let yPos = startY + (idx * fontSize * 1.3);
+            if (selectedSubStyle === 'yellow') {
+              ctx.fillStyle = '#facc15';
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = 8;
+              ctx.strokeText(line, canvas.width / 2, yPos);
+              ctx.fillText(line, canvas.width / 2, yPos);
+            } else if (selectedSubStyle === 'neon') {
+              ctx.shadowColor = '#a855f7';
+              ctx.shadowBlur = 20;
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(line, canvas.width / 2, yPos);
+            } else if (selectedSubStyle === 'box') {
+              ctx.fillStyle = '#000000c0';
+              const textWidth = ctx.measureText(line).width;
+              ctx.fillRect((canvas.width - textWidth) / 2 - 10, yPos - fontSize + 5, textWidth + 20, fontSize + 10);
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(line, canvas.width / 2, yPos);
+            } else {
+              ctx.fillStyle = '#ffffff';
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = 6;
+              ctx.strokeText(line, canvas.width / 2, yPos);
+              ctx.fillText(line, canvas.width / 2, yPos);
+            }
+          });
+          ctx.restore();
+        }
+
+        function animate() {
+          const elapsed = (Date.now() - startTime) / 1000;
+
+          if (elapsed >= totalDuration) {
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            if (recorder && recorder.state !== 'inactive') recorder.stop();
+            return;
+          }
+
+          status.innerHTML = `🎬 <b>[4/4] Render Alınıyor:</b> ${elapsed.toFixed(1)}s / ${totalDuration}s işleniyor...`;
+
+          const sceneIndex = Math.min(Math.floor(elapsed / sceneDuration), loadedImages.length - 1);
+          const currentData = loadedImages[sceneIndex];
+
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          if (currentData && currentData.img) {
+            ctx.save();
+            const sceneElapsed = elapsed % sceneDuration;
+            const scale = 1.0 + (sceneElapsed * 0.02);
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(scale, scale);
+            ctx.drawImage(currentData.img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+            ctx.restore();
+
+            drawSubtitle(currentData.scene.subtitle);
+          }
+
+          requestAnimationFrame(animate);
+        }
+
+        animate();
+
+      } catch (e) {
+        counter.innerText = "0";
+        status.innerHTML = "❌ Hata: " + e.message;
+      }
+    }
+
+    function downloadVideo() {
+      if (!generatedVideoUrl) return;
+      const a = document.createElement('a');
+      a.href = generatedVideoUrl;
+      a.download = `shorts_${Date.now()}.mp4`;
+      a.click();
+    }
+  </script>
+</body>
+</html>

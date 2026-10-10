@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Kurgu Canavarı - Sınırsız",
+  "version": "1.0",
+  "description": "SRT altyazı zamanlarına göre ses ve sahneleri otomatik kurgular.",
+  "action": {
+    "default_title": "Kurgu Canavarını Aç"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": []
+}
