@@ -65,10 +65,8 @@
         <input type="text" id="customTopicInput" placeholder="Örn: Karadelikler, Fatih Sultan Mehmet..." />
       </div>
       <div>
-        <label class="field-label">🎙️ Ses Motoru</label>
-        <select id="voiceEngineSelect">
-          <option value="google_tts">Google TTS (Türkçe)</option>
-        </select>
+        <label class="field-label">Google Cloud API Key</label>
+        <input type="text" id="apiKeyInput" value="AIzaSyDlKGg2a5-Jg-A-nt0dND41fAbPB51YRZ0" />
       </div>
     </div>
   </div>
@@ -125,7 +123,7 @@
   </div>
 
   <div class="action-row">
-    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 GOOGLE SESLİ MP4 VİDEO ÜRET VE İNDİR</button>
+    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 GOOGLE AI SESLİ VİDEO ÜRET VE İNDİR</button>
     <div class="counter-bar" id="stepCounter">0</div>
   </div>
 
@@ -181,23 +179,32 @@
       });
     }
 
-    // Google TTS Sesini Büyüteç / Proxy Üzerinden Ses Akışına Bağlama
-    function createGoogleAudioElement(text) {
-      return new Promise((resolve, reject) => {
-        const encodedText = encodeURIComponent(text);
-        // Google TTS URL
-        const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=tr&client=tw-ob`;
-        
-        const audio = new Audio();
-        audio.crossOrigin = "anonymous";
-        audio.src = googleUrl;
-        
-        audio.oncanplaythrough = () => resolve(audio);
-        audio.onerror = () => {
-          // Fallback: Doğrudan ses elementi oluşturma
-          resolve(audio);
-        };
+    // Google Cloud Text-to-Speech API Bağlantısı (Ses Tamponu)
+    async function fetchGoogleSpeechBuffer(text, apiKey, audioCtx) {
+      const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { text: text },
+          voice: { languageCode: 'tr-TR', name: 'tr-TR-Wavenet-D' },
+          audioConfig: { audioEncoding: 'MP3' }
+        })
       });
+
+      const data = await response.json();
+      if (!data.audioContent) {
+        throw new Error(data.error ? data.error.message : "Google Cloud TTS Sesi Alınamadı!");
+      }
+
+      const binaryString = atob(data.audioContent);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      return await audioCtx.decodeAudioData(bytes.buffer);
     }
 
     async function startGeneration() {
@@ -206,6 +213,7 @@
       const downloadBtn = document.getElementById('downloadBtn');
       const category = document.getElementById('categorySelect').value;
       const customTopic = document.getElementById('customTopicInput').value.trim();
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
       const totalDuration = parseInt(document.getElementById('durationSelect').value);
       const finalTopic = customTopic !== "" ? customTopic : category;
 
@@ -225,7 +233,7 @@
         ];
 
         counter.innerText = "2";
-        status.innerHTML = `🖼️ <b>[2/4] HD Görseller Çekiliyor...</b>`;
+        status.innerHTML = `🖼️ <b>[2/4] HD Görseller Yükleniyor...</b>`;
 
         const loadedImages = [];
         for (let i = 0; i < scenes.length; i++) {
@@ -234,22 +242,24 @@
         }
 
         counter.innerText = "3";
-        status.innerHTML = `🎙️ <b>[3/4] Google Seslandırma Kanalı Bağlanıyor...</b>`;
+        status.innerHTML = `🎙️ <b>[3/4] Google AI Sesi Dijital Ses Kanalına Gömeçleniyor...</b>`;
 
         const fullText = scenes.map(s => s.subtitle).join('. ');
         
-        // AudioContext Kurulumu
+        // Web Audio Context Oluştur
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const audioDest = audioCtx.createMediaStreamDestination();
-        
-        let audioObj = await createGoogleAudioElement(fullText);
-        try {
-          const source = audioCtx.createMediaElementSource(audioObj);
-          source.connect(audioDest);
-          source.connect(audioCtx.destination);
-        } catch (e) {
-          console.log("Audio source hatası:", e);
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
         }
+
+        const audioDest = audioCtx.createMediaStreamDestination();
+        const decodedAudioBuffer = await fetchGoogleSpeechBuffer(fullText, apiKey, audioCtx);
+
+        // Tam dijital ses kaynağı
+        const bufferSource = audioCtx.createBufferSource();
+        bufferSource.buffer = decodedAudioBuffer;
+        bufferSource.connect(audioDest);
+        bufferSource.connect(audioCtx.destination); // Kullanıcının da duyması için
 
         const canvas = document.getElementById('renderCanvas');
         const [resW, resH] = document.getElementById('resolution').value.split('x').map(Number);
@@ -260,14 +270,14 @@
         const fps = parseInt(document.getElementById('fpsSelect').value);
         const canvasStream = canvas.captureStream(fps);
 
-        // Video ve Ses Akışını Birleştir
+        // Görüntü + Dijital Ses Kanalı Birleştirme
         const combinedTracks = [
           ...canvasStream.getVideoTracks(),
           ...audioDest.stream.getAudioTracks()
         ];
         const combinedStream = new MediaStream(combinedTracks);
 
-        let options = { mimeType: 'video/webm' };
+        let options = { mimeType: 'video/webm;codecs=vp8,opus' };
         if (MediaRecorder.isTypeSupported('video/mp4')) {
           options = { mimeType: 'video/mp4' };
         }
@@ -283,14 +293,11 @@
           downloadVideo();
           downloadBtn.style.display = 'block';
           counter.innerText = "0";
-          status.innerHTML = `🎉 <b>[4/4] Tamamlandı:</b> Google Sesli Videonuz İndirildi! %100`;
+          status.innerHTML = `🎉 <b>[4/4] Tamamlandı:</b> Google AI Sesli Videonuz İndirildi! %100`;
         };
 
         recorder.start();
-
-        if (audioObj) {
-          audioObj.play().catch(() => {});
-        }
+        bufferSource.start(0);
 
         counter.innerText = "4";
         const startTime = Date.now();
