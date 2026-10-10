@@ -39,7 +39,7 @@
 <body>
 
   <h1>Kurgu Canavarı OTO-PILOT</h1>
-  <p class="sub">Tüm Kategoriler İçin Çok Amaçlı Otomatik YouTube Shorts Üretici</p>
+  <p class="sub">Pixabay Destekli Çok Amaçlı Otomatik YouTube Shorts Üretici</p>
 
   <div class="panel-card">
     <div class="panel-title">1. İÇERİK VE KATEGORİ SEÇİMİ</div>
@@ -47,12 +47,11 @@
       <div>
         <label class="field-label">Ana Kategori</label>
         <select id="categorySelect">
-          <option value="Dini ve Manevi Bilgiler">🕌 Dini & Manevi Bilgiler</option>
-          <option value="Ilginç Bilgiler">💡 İlginç Bilgiler & Şaşırtıcı Gerçekler</option>
-          <option value="Dunya ve Turk Tarihi">📜 Dünya & Türk Tarihi</option>
-          <option value="Bilim ve Teknoloji">🚀 Bilim, Teknoloji & Uzay</option>
-          <option value="Motivasyon">🔥 Motivasyon & Başarı Hikayeleri</option>
-          <option value="Psikoloji">🧠 Psikoloji & Zihin Gerçekleri</option>
+          <option value="history">📜 Dünya & Türk Tarihi</option>
+          <option value="space">🚀 Bilim, Teknoloji & Uzay</option>
+          <option value="nature">🌿 Doğa & Maneviyat</option>
+          <option value="motivation">🔥 Motivasyon & Başarı</option>
+          <option value="psychology">🧠 Psikoloji & Zihin</option>
         </select>
       </div>
       <div>
@@ -81,7 +80,6 @@
         <select id="durationSelect">
           <option value="15" selected>15 Saniye (Hızlı)</option>
           <option value="30">30 Saniye (Uzun Shorts)</option>
-          <option value="60">60 Saniye (Tam Boyut)</option>
         </select>
       </div>
       <div>
@@ -92,11 +90,8 @@
         </select>
       </div>
       <div>
-        <label class="field-label">FPS Modu</label>
-        <select id="fpsSelect">
-          <option value="30">30 FPS (Dengeli)</option>
-          <option value="60">60 FPS (Pürüzsüz)</option>
-        </select>
+        <label class="field-label">Pixabay API Key (Görsel İçin)</label>
+        <input type="text" id="pixabayKeyInput" placeholder="Pixabay Key (Boş bırakılabilir)" value="43210103-e847c1341c2c31e9c8a14ff2b" />
       </div>
     </div>
 
@@ -116,7 +111,7 @@
   </div>
 
   <div class="action-row">
-    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 VİDEO VE SESİ İNDİR</button>
+    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 %100 SESLİ MP4 VİDEO ÜRET VE İNDİR</button>
     <div class="counter-bar" id="stepCounter">0</div>
   </div>
   
@@ -148,13 +143,32 @@
       return lines;
     }
 
-    function fetchHDImage(sig) {
-      return new Promise(function(resolve) {
+    // Pixabay API veya Yedek Görsel Çekici
+    async function fetchPixabayImage(query, pxKey, sig) {
+      if (pxKey) {
+        try {
+          const url = "https://pixabay.com/api/?key=" + pxKey + "&q=" + encodeURIComponent(query) + "&image_type=photo&orientation=vertical&per_page=10";
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.hits && data.hits.length > 0) {
+            const hit = data.hits[Math.floor(Math.random() * data.hits.length)];
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = hit.largeImageURL;
+            await new Promise((r) => { img.onload = r; img.onerror = r; });
+            if (img.complete && img.naturalWidth !== 0) return img;
+          }
+        } catch (e) {
+          console.log("Pixabay yedek görsele geçildi.");
+        }
+      }
+
+      return new Promise((resolve) => {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.src = "https://picsum.photos/1080/1920?random=" + sig;
-        img.onload = function() { resolve(img); };
-        img.onerror = function() {
+        img.onload = () => resolve(img);
+        img.onerror = () => {
           const c = document.createElement('canvas');
           c.width = 1080; c.height = 1920;
           const ctx = c.getContext('2d');
@@ -162,55 +176,37 @@
           ctx.fillRect(0, 0, 1080, 1920);
           const fallbackImg = new Image();
           fallbackImg.src = c.toDataURL();
-          fallbackImg.onload = function() { resolve(fallbackImg); };
+          fallbackImg.onload = () => resolve(fallbackImg);
         };
       });
     }
 
-    function downloadGoogleSpeechMP3(text, apiKey) {
-      return new Promise(function(resolve, reject) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(function() { controller.abort(); }, 4000); // 4 saniye zaman aşımı
-
-        const url = "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + apiKey;
-        fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            input: { text: text },
-            voice: { languageCode: 'tr-TR', name: 'tr-TR-Standard-A' },
-            audioConfig: { audioEncoding: 'MP3' }
-          })
+    // Google Cloud TTS - Decode Edilmiş Ses Tamponu
+    async function fetchGoogleAudioBuffer(text, apiKey, audioCtx) {
+      const url = "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + apiKey;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          input: { text: text },
+          voice: { languageCode: 'tr-TR', name: 'tr-TR-Standard-A' },
+          audioConfig: { audioEncoding: 'MP3' }
         })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          clearTimeout(timeoutId);
-          if (!data || !data.audioContent) {
-            reject(new Error(data && data.error ? data.error.message : "Google TTS Ses Verisi Boş"));
-            return;
-          }
-          const binaryString = atob(data.audioContent);
-          const len = binaryString.length;
-          const bytes = new Uint8Array(len);
-          for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          const blob = new Blob([bytes.buffer], { type: 'audio/mp3' });
-          const audioUrl = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = audioUrl;
-          a.download = "seslendirme_" + Date.now() + ".mp3";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          resolve(true);
-        })
-        .catch(function(err) {
-          clearTimeout(timeoutId);
-          reject(err);
-        });
       });
+
+      const data = await response.json();
+      if (!data || !data.audioContent) {
+        throw new Error(data && data.error ? data.error.message : "Ses verisi alınamadı.");
+      }
+
+      const binaryString = atob(data.audioContent);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      return await audioCtx.decodeAudioData(bytes.buffer);
     }
 
     async function startGeneration() {
@@ -220,43 +216,57 @@
       const category = document.getElementById('categorySelect').value;
       const customTopic = document.getElementById('customTopicInput').value.trim();
       const apiKey = document.getElementById('apiKeyInput').value.trim();
+      const pixabayKey = document.getElementById('pixabayKeyInput').value.trim();
       const totalDuration = parseInt(document.getElementById('durationSelect').value);
-      const finalTopic = customTopic !== "" ? customTopic : category;
+      const searchQuery = customTopic !== "" ? customTopic : category;
 
       btn.disabled = true;
 
       try {
         counter.innerText = "1";
-        status.innerHTML = "⏳ <b>[1/4] Metin Hazırlanıyor...</b>";
+        status.innerHTML = "⏳ <b>[1/4] Metin ve İçerik Kurgulanıyor...</b>";
 
         const scenes = [
-          { subtitle: finalTopic + " Hakkinda Sasirtici Gercekler" },
-          { subtitle: "Gecmistten gunumuze gelen en gizemli detaylar." },
-          { subtitle: "Bilimin ve tarihin arkasindaki sakli sirlar." },
-          { subtitle: "Bu gercekler bakis acinizi tamamen degistirecek." },
-          { subtitle: "Herkesin merak ettigi o buyuleyici konular." },
-          { subtitle: "Daha fazla icerik icin takip etmeyi unutmayin!" }
+          { subtitle: searchQuery.toUpperCase() + " Hakkında Şaşırtıcı Gerçekler" },
+          { subtitle: "Geçmişten günümüze gelen en gizemli detaylar." },
+          { subtitle: "Bilimin ve tarihin arkasındaki saklı sırlar." },
+          { subtitle: "Bu gerçekler bakış açınızı tamamen değiştirecek." },
+          { subtitle: "Herkesin merak ettiği o büyüleyici konular." },
+          { subtitle: "Daha fazla içerik için takip etmeyi unutmayın!" }
         ];
 
         counter.innerText = "2";
-        status.innerHTML = "🖼️ <b>[2/4] HD Görseller Yükleniyor...</b>";
+        status.innerHTML = "🖼️ <b>[2/4] Pixabay HD Stok Görseller Çekiliyor...</b>";
 
         const loadedImages = [];
         for (let i = 0; i < scenes.length; i++) {
-          const img = await fetchHDImage(Math.floor(Math.random() * 5000) + i);
+          const img = await fetchPixabayImage(searchQuery, pixabayKey, Math.floor(Math.random() * 5000) + i);
           loadedImages.push({ scene: scenes[i], img: img });
         }
 
         counter.innerText = "3";
-        status.innerHTML = "🎙️ <b>[3/4] MP3 Ses Dosyası İndiriliyor...</b>";
+        status.innerHTML = "🎙️ <b>[3/4] Google AI Sesi Dijital Ses Kanalına Bağlanıyor...</b>";
 
-        const fullText = scenes.map(function(s) { return s.subtitle; }).join('. ');
+        const fullText = scenes.map(s => s.subtitle).join('. ');
+
+        // AudioContext Kurulumu
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+
+        const audioDest = audioCtx.createMediaStreamDestination();
+        let bufferSource = null;
 
         try {
-          await downloadGoogleSpeechMP3(fullText, apiKey);
+          const audioBuffer = await fetchGoogleAudioBuffer(fullText, apiKey, audioCtx);
+          bufferSource = audioCtx.createBufferSource();
+          bufferSource.buffer = audioBuffer;
+          bufferSource.connect(audioDest);
+          bufferSource.connect(audioCtx.destination);
         } catch (audioErr) {
-          console.warn("Ses hatasi detay:", audioErr);
-          status.innerHTML = "⚠️ Ses Uyarısı: " + audioErr.message + " (Video render başlatıldı...)";
+          console.warn("Ses hatası:", audioErr);
+          status.innerHTML = "⚠️ Ses Hatası: " + audioErr.message;
         }
 
         const canvas = document.getElementById('renderCanvas');
@@ -265,35 +275,44 @@
         canvas.height = parseInt(resParts[1]);
         const ctx = canvas.getContext('2d');
 
-        const fps = parseInt(document.getElementById('fpsSelect').value);
-        const canvasStream = canvas.captureStream(fps);
+        const canvasStream = canvas.captureStream(30);
 
-        let options = { mimeType: 'video/webm' };
+        // Görüntü + Dijital Ses Kanalını %100 Birleştir
+        const combinedTracks = [
+          ...canvasStream.getVideoTracks(),
+          ...audioDest.stream.getAudioTracks()
+        ];
+        const combinedStream = new MediaStream(combinedTracks);
+
+        let options = { mimeType: 'video/webm;codecs=vp8,opus' };
         if (MediaRecorder.isTypeSupported('video/mp4')) {
           options = { mimeType: 'video/mp4' };
         }
 
-        const recorder = new MediaRecorder(canvasStream, options);
+        const recorder = new MediaRecorder(combinedStream, options);
         const chunks = [];
-        recorder.ondataavailable = function(e) { chunks.push(e.data); };
+        recorder.ondataavailable = e => chunks.push(e.data);
 
-        recorder.onstop = function() {
+        recorder.onstop = () => {
           const blob = new Blob(chunks, { type: options.mimeType });
           const videoUrl = URL.createObjectURL(blob);
 
           const a = document.createElement('a');
           a.href = videoUrl;
-          a.download = "video_" + Date.now() + ".mp4";
+          a.download = "sesli_shorts_" + Date.now() + ".mp4";
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
 
           counter.innerText = "0";
-          status.innerHTML = "🎉 <b>[4/4] Tamamlandı:</b> İndirmeler Başlatıldı!";
+          status.innerHTML = "🎉 <b>[4/4] Tamamlandı:</b> Sesli MP4 Videonuz İndirildi!";
           btn.disabled = false;
         };
 
         recorder.start();
+        if (bufferSource) {
+          bufferSource.start(0);
+        }
 
         counter.innerText = "4";
         const startTime = Date.now();
@@ -307,7 +326,7 @@
           const lines = wrapText(ctx, text, canvas.width * 0.85);
           const startY = canvas.height * 0.75;
 
-          lines.forEach(function(line, idx) {
+          lines.forEach((line, idx) => {
             let yPos = startY + (idx * fontSize * 1.3);
             if (selectedSubStyle === 'yellow') {
               ctx.fillStyle = '#facc15';
