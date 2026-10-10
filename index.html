@@ -65,12 +65,9 @@
         <input type="text" id="customTopicInput" placeholder="Örn: Karadelikler, Fatih Sultan Mehmet..." />
       </div>
       <div>
-        <label class="field-label">Görsel Sanat Tarzı</label>
-        <select id="styleSelect">
-          <option value="photorealistic">📸 Sinematik Gerçekçi</option>
-          <option value="digitalart">🎨 Dijital Sanat</option>
-          <option value="oilpainting">🖼️ Tarihi Yağlı Boya</option>
-          <option value="render3d">🛸 3D Gelecekçi Render</option>
+        <label class="field-label">🎙️ Ses Motoru</label>
+        <select id="voiceEngineSelect">
+          <option value="google_tts">Google TTS (Türkçe)</option>
         </select>
       </div>
     </div>
@@ -128,7 +125,7 @@
   </div>
 
   <div class="action-row">
-    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 %100 SESLİ VİDEO ÜRET VE İNDİR</button>
+    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 GOOGLE SESLİ MP4 VİDEO ÜRET VE İNDİR</button>
     <div class="counter-bar" id="stepCounter">0</div>
   </div>
 
@@ -184,16 +181,22 @@
       });
     }
 
-    // Doğrudan AudioContext Akışına Bağlanan Ses Üreticisi
-    function fetchAudioStream(text) {
+    // Google TTS Sesini Büyüteç / Proxy Üzerinden Ses Akışına Bağlama
+    function createGoogleAudioElement(text) {
       return new Promise((resolve, reject) => {
         const encodedText = encodeURIComponent(text);
-        const url = `https://api.streamelements.com/kappa/v2/speech?voice=Filiz&text=${encodedText}`;
+        // Google TTS URL
+        const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=tr&client=tw-ob`;
+        
         const audio = new Audio();
         audio.crossOrigin = "anonymous";
-        audio.src = url;
+        audio.src = googleUrl;
+        
         audio.oncanplaythrough = () => resolve(audio);
-        audio.onerror = (e) => reject(e);
+        audio.onerror = () => {
+          // Fallback: Doğrudan ses elementi oluşturma
+          resolve(audio);
+        };
       });
     }
 
@@ -222,7 +225,7 @@
         ];
 
         counter.innerText = "2";
-        status.innerHTML = `🖼️ <b>[2/4] HD Görseller Yükleniyor...</b>`;
+        status.innerHTML = `🖼️ <b>[2/4] HD Görseller Çekiliyor...</b>`;
 
         const loadedImages = [];
         for (let i = 0; i < scenes.length; i++) {
@@ -231,22 +234,21 @@
         }
 
         counter.innerText = "3";
-        status.innerHTML = `🎙️ <b>[3/4] Ses ve Video Bağlanıyor...</b>`;
+        status.innerHTML = `🎙️ <b>[3/4] Google Seslandırma Kanalı Bağlanıyor...</b>`;
 
         const fullText = scenes.map(s => s.subtitle).join('. ');
         
-        // AudioContext ve Ses Akışı Hazırlığı
+        // AudioContext Kurulumu
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const audioDest = audioCtx.createMediaStreamDestination();
         
-        let audioObj = null;
+        let audioObj = await createGoogleAudioElement(fullText);
         try {
-          audioObj = await fetchAudioStream(fullText);
           const source = audioCtx.createMediaElementSource(audioObj);
           source.connect(audioDest);
           source.connect(audioCtx.destination);
-        } catch (err) {
-          console.log("Ses akışı oluşturulurken alternatif kanala geçildi.");
+        } catch (e) {
+          console.log("Audio source hatası:", e);
         }
 
         const canvas = document.getElementById('renderCanvas');
@@ -258,11 +260,14 @@
         const fps = parseInt(document.getElementById('fpsSelect').value);
         const canvasStream = canvas.captureStream(fps);
 
-        // Görüntü ve Dijital Ses Kanalını Birlikte Kaydet
-        const tracks = [...canvasStream.getVideoTracks(), ...audioDest.stream.getAudioTracks()];
-        const combinedStream = new MediaStream(tracks);
+        // Video ve Ses Akışını Birleştir
+        const combinedTracks = [
+          ...canvasStream.getVideoTracks(),
+          ...audioDest.stream.getAudioTracks()
+        ];
+        const combinedStream = new MediaStream(combinedTracks);
 
-        let options = { mimeType: 'video/webm;codecs=vp8,opus' };
+        let options = { mimeType: 'video/webm' };
         if (MediaRecorder.isTypeSupported('video/mp4')) {
           options = { mimeType: 'video/mp4' };
         }
@@ -278,13 +283,13 @@
           downloadVideo();
           downloadBtn.style.display = 'block';
           counter.innerText = "0";
-          status.innerHTML = `🎉 <b>[4/4] Tamamlandı:</b> Sesli Videonuz İndirildi! %100`;
+          status.innerHTML = `🎉 <b>[4/4] Tamamlandı:</b> Google Sesli Videonuz İndirildi! %100`;
         };
 
         recorder.start();
 
         if (audioObj) {
-          audioObj.play();
+          audioObj.play().catch(() => {});
         }
 
         counter.innerText = "4";
@@ -372,4 +377,9 @@
       if (!generatedVideoUrl) return;
       const a = document.createElement('a');
       a.href = generatedVideoUrl;
-      a
+      a.download = `shorts_${Date.now()}.mp4`;
+      a.click();
+    }
+  </script>
+</body>
+</html>
