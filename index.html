@@ -7,34 +7,33 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #0b0f19; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 15px; min-height: 100vh; }
     
-    h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 2px; }
+    h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(90deg, #3b82f6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 2px; }
     p.sub { color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px; text-align: center; }
 
-    .panel-card { background: #111827; border: 1px solid #1e293b; border-radius: 10px; padding: 15px; width: 100%; max-width: 900px; margin-bottom: 12px; }
-    .panel-title { font-size: 0.8rem; color: #a855f7; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+    .panel-card { background: #111827; border: 1px solid #1e293b; border-radius: 10px; padding: 12px; width: 100%; max-width: 900px; margin-bottom: 10px; }
+    .panel-title { font-size: 0.75rem; color: #a855f7; font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
 
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 
     label.field-label { display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600; }
     select, input[type="text"] { width: 100%; background: #1e293b; border: 1px solid #334155; color: #fff; padding: 8px; border-radius: 6px; outline: none; font-size: 0.85rem; }
 
     .subtitle-styles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 5px; }
-    .sub-btn { background: #1e293b; border: 2px solid #334155; border-radius: 6px; padding: 8px 4px; text-align: center; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; user-select: none; }
-    .sub-btn.active { border-color: #a855f7; background: #a855f720; color: #a855f7; box-shadow: 0 0 8px rgba(168, 85, 247, 0.4); }
+    .sub-btn { background: #1e293b; border: 2px solid #334155; border-radius: 6px; padding: 6px 4px; text-align: center; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; user-select: none; }
+    .sub-btn.active { border-color: #a855f7; background: #a855f720; color: #a855f7; }
 
-    .preview-box { width: 100%; max-width: 900px; background: #111827; border: 1px solid #1e293b; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
-    .canvas-container { width: 100%; background: #000; display: flex; justify-content: center; align-items: center; }
-    canvas { width: 100%; max-height: 380px; object-fit: contain; display: block; }
+    .preview-box { width: 100%; max-width: 900px; background: #111827; border: 1px solid #1e293b; border-radius: 10px; overflow: hidden; margin-bottom: 10px; display: flex; justify-content: center; }
+    canvas { width: 100%; max-height: 280px; object-fit: contain; display: block; background: #000; }
 
     .action-row { display: flex; gap: 10px; width: 100%; max-width: 900px; margin-bottom: 10px; }
-    .btn-submit { flex: 1; background: linear-gradient(90deg, #3b82f6, #a855f7); border: none; color: white; padding: 16px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
-    .btn-submit:hover { opacity: 0.95; transform: translateY(-1px); }
+    .btn-submit { flex: 1; background: linear-gradient(90deg, #3b82f6, #a855f7); border: none; color: white; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-submit:hover { opacity: 0.95; }
     .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .counter-bar { width: 70px; background: #111827; border: 2px solid #a855f7; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: 800; color: #38bdf8; box-shadow: 0 0 10px rgba(168, 85, 247, 0.2); }
+    .counter-bar { width: 60px; background: #111827; border: 2px solid #a855f7; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; font-weight: 800; color: #38bdf8; }
 
-    #status { color: #38bdf8; font-weight: 600; font-size: 0.9rem; text-align: center; background: #1e293b; padding: 12px; border-radius: 6px; width: 100%; max-width: 900px; margin-top: 10px; word-break: break-all; }
+    #status { color: #38bdf8; font-weight: 600; font-size: 0.85rem; text-align: center; background: #1e293b; padding: 10px; border-radius: 6px; width: 100%; max-width: 900px; }
   </style>
 </head>
 <body>
@@ -81,5 +80,144 @@
       <div>
         <label class="field-label">Video Süresi</label>
         <select id="durationSelect">
-          <option value="30" selected>30 Saniye (Uzun Shorts)</option>
-          <option value="15">15 Saniye
+          <option value="15" selected>15 Saniye (Hızlı)</option>
+          <option value="30">30 Saniye (Uzun Shorts)</option>
+          <option value="60">60 Saniye (Tam Boyut)</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Altyazı Boyutu</label>
+        <select id="subSize">
+          <option value="medium" selected>Orta</option>
+          <option value="large">Büyük</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">FPS Modu</label>
+        <select id="fpsSelect">
+          <option value="30">30 FPS (Dengeli)</option>
+          <option value="60">60 FPS (Pürüzsüz)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel-title" style="margin-top: 8px;">ALTYAZI TEMA STİLİ</div>
+    <div class="subtitle-styles">
+      <div class="sub-btn active" onclick="setSubStyle('yellow', this)">Sarı Vurgu</div>
+      <div class="sub-btn" onclick="setSubStyle('neon', this)">Neon Mor</div>
+      <div class="sub-btn" onclick="setSubStyle('box', this)">Koyu Kutu</div>
+      <div class="sub-btn" onclick="setSubStyle('cinema', this)">Sinema</div>
+      <div class="sub-btn" onclick="setSubStyle('classic', this)">Klasik</div>
+      <div class="sub-btn" onclick="setSubStyle('minimal', this)">Minimal</div>
+    </div>
+  </div>
+
+  <div class="preview-box">
+    <canvas id="renderCanvas" width="1080" height="1920"></canvas>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-submit" id="autoStartBtn" onclick="startGeneration()">🚀 VİDEO VE SESİ İNDİR</button>
+    <div class="counter-bar" id="stepCounter">0</div>
+  </div>
+  
+  <div id="status">Hazır. Üretimi başlatmak için butona basın.</div>
+
+  <script>
+    let selectedSubStyle = 'yellow';
+
+    function setSubStyle(style, el) {
+      document.querySelectorAll('.sub-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      selectedSubStyle = style;
+    }
+
+    function wrapText(ctx, text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = words[0] || '';
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        if (ctx.measureText(currentLine + ' ' + word).width < maxWidth) {
+          currentLine += ' ' + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    }
+
+    function fetchHDImage(sig) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = "https://picsum.photos/1080/1920?random=" + sig;
+        img.onload = function() { resolve(img); };
+        img.onerror = function() {
+          const c = document.createElement('canvas');
+          c.width = 1080; c.height = 1920;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(0, 0, 1080, 1920);
+          const fallbackImg = new Image();
+          fallbackImg.src = c.toDataURL();
+          fallbackImg.onload = function() { resolve(fallbackImg); };
+        };
+      });
+    }
+
+    function downloadGoogleSpeechMP3(text, apiKey) {
+      return new Promise((resolve, reject) => {
+        const url = "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + apiKey;
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            input: { text: text },
+            voice: { languageCode: 'tr-TR', ssmlGender: 'FEMALE' },
+            audioConfig: { audioEncoding: 'MP3' }
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (!data.audioContent) {
+            reject(new Error(data.error ? data.error.message : "Ses verisi alınamadı"));
+            return;
+          }
+          const binaryString = atob(data.audioContent);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes.buffer], { type: 'audio/mp3' });
+          const audioUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = audioUrl;
+          a.download = "seslendirme_" + Date.now() + ".mp3";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          resolve(true);
+        })
+        .catch(err => reject(err));
+      });
+    }
+
+    async function startGeneration() {
+      const btn = document.getElementById('autoStartBtn');
+      const status = document.getElementById('status');
+      const counter = document.getElementById('stepCounter');
+      const category = document.getElementById('categorySelect').value;
+      const customTopic = document.getElementById('customTopicInput').value.trim();
+      const apiKey = document.getElementById('apiKeyInput').value.trim();
+      const totalDuration = parseInt(document.getElementById('durationSelect').value);
+      const finalTopic = customTopic !== "" ? customTopic : category;
+
+      btn.disabled = true;
+
+      try {
+        counter.innerText = "1";
+        status.innerHTML = "⏳
